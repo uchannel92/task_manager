@@ -1,0 +1,3 @@
+admin;complete capstone project 2;create relevant functions to complete task;2024-02-02;2024-01-29;No
+uchenna;Get hired;ensure i have prepared my notes for interview.;2024-01-30;2024-01-29;No
+admin;Test that add task function refactor worked;Refactor function by implementing a function;2024-02-02;2024-01-31;No
