@@ -143,13 +143,108 @@ def view_all():
            and labelling) 
         '''
 
-        for t in task_list:
-            disp_str = f"Task: \t\t {t['title']}\n"
+        for index, t in enumerate(task_list):
+            disp_str = f"Task number: {index}\n"
+            disp_str += f"Task: \t\t {t['title']}\n"
             disp_str += f"Assigned to: \t {t['username']}\n"
             disp_str += f"Date Assigned: \t {t['assigned_date'].strftime(DATETIME_STRING_FORMAT)}\n"
             disp_str += f"Due Date: \t {t['due_date'].strftime(DATETIME_STRING_FORMAT)}\n"
             disp_str += f"Task Description: \n {t['description']}\n"
             print(disp_str)
+
+
+# --------------- View All Tasks Functions --------------- 
+def view_mine():
+        '''Reads the task from task.txt file and prints to the console in the 
+        format of Output 2 presented in the task pdf (i.e. includes spacing
+        and labelling)'''
+        view_all()
+
+        loop_done = False
+        while (not loop_done):
+
+            try:
+                task_number = int(input("Enter a valid task number to edit task or enter '-1' to return to MENU: "))
+            except (ValueError, NameError):
+                print("Select a valid row number to edit.")
+                loop_done = True
+            else:
+                for task_num, t in enumerate(task_list):
+                    if task_number == -1:
+                        loop_done = True
+                    
+                    elif task_number == task_num:
+                            if t['username'] != curr_user:
+                                print("This task is not assigned to you. please select a task assigned to you.")
+                                loop_done = True
+                                #print(t)
+                            else:
+                                option = input("Select 'mc' to mark task complete or 'et' to edit task: ")
+                            
+                                if option == 'mc':
+                                    if t['completed'] == True:
+                                        print("This task is already complete")
+                                        loop_done = True
+
+                                    else:
+                                        t['completed'] = True # update task value to true
+                                        print("task has been marked as complete.")
+                                        loop_done = True
+                                
+                                elif option == 'et': # edit the edit task field
+                                    option = input("Enter 'eu' to edit username or 'edd' to edit the due date: ")
+
+                                    if option == 'eu':
+                                        user_found = False
+                                        while (not user_found):
+                                            username = input("Enter the new username to be assigned to this task: ")
+                                            for task in task_list:
+                                                if username in task.values():
+                                                    task_list[task_number]['username'] = username
+                                                    user_found = True
+                                            
+                                            if user_found == False:
+                                                print(f"Username {username} not found")
+                                                user_found = True
+                                                loop_done = True
+                                            else:
+                                                print("Username has been updated")
+                                                user_found = True
+                                                loop_done = True
+                                    
+                                    elif option == 'edd':
+                                        while True:
+                                            try: # update the due date field
+                                                task_due_date = input("Due date of task (YYYY-MM-DD): ")
+                                                due_date_time = datetime.strptime(task_due_date, DATETIME_STRING_FORMAT)
+                                                task_list[task_number]['due_date'] = due_date_time
+                                                print(f"Due date has been updated to {task_due_date}")
+                                                loop_done = True
+                                                break
+                                            except ValueError:
+                                                print("Invalid datetime format. Please use the format specified")   
+                                    else:
+                                        print("Enter 'eu' to edit username or 'edd' to edit due date. You will return to the main menu.")
+                                        loop_done = True
+                                else:
+                                    print(("You need to enter 'mc' to mark task complete  or 'et' to edit task."))
+                                    loop_done = True         
+        
+        # update text file with changes made.
+        with open("tasks.txt", "w") as task_file:
+            task_list_to_write = []
+            for t in task_list:
+                str_attrs = [
+                    t['username'],
+                    t['title'],
+                    t['description'],
+                    t['due_date'].strftime(DATETIME_STRING_FORMAT),
+                    t['assigned_date'].strftime(DATETIME_STRING_FORMAT),
+                    "Yes" if t['completed'] else "No"
+                ]
+                task_list_to_write.append(";".join(str_attrs))
+            task_file.write("\n".join(task_list_to_write))
+
 
 task_list = []
 for t_str in task_data:
@@ -226,19 +321,23 @@ e - Exit
         view_all()
             
     elif menu == 'vm':
-        '''Reads the task from task.txt file and prints to the console in the 
-           format of Output 2 presented in the task pdf (i.e. includes spacing
-           and labelling)
-        '''
-        for t in task_list:
-            if t['username'] == curr_user:
-                disp_str = f"Task: \t\t {t['title']}\n"
-                disp_str += f"Assigned to: \t {t['username']}\n"
-                disp_str += f"Date Assigned: \t {t['assigned_date'].strftime(DATETIME_STRING_FORMAT)}\n"
-                disp_str += f"Due Date: \t {t['due_date'].strftime(DATETIME_STRING_FORMAT)}\n"
-                disp_str += f"Task Description: \n {t['description']}\n"
-                print(disp_str)
-                
+        view_mine()
+        # '''Reads the task from task.txt file and prints to the console in the 
+        #    format of Output 2 presented in the task pdf (i.e. includes spacing
+        #    and labelling)
+        # ''' 
+        # for index, t in enumerate(task_list):
+        #     if t['username'] == curr_user:
+        #         disp_str = f"Task number: {index}\n"
+        #         disp_str += f"Task: \t\t {t['title']}\n"
+        #         disp_str += f"Assigned to: \t {t['username']}\n"
+        #         disp_str += f"Date Assigned: \t {t['assigned_date'].strftime(DATETIME_STRING_FORMAT)}\n"
+        #         disp_str += f"Due Date: \t {t['due_date'].strftime(DATETIME_STRING_FORMAT)}\n"
+        #         disp_str += f"Task Description: \n {t['description']}\n"
+        #         print(disp_str)
+
+        # selected_task = input('Select your task:')
+
     
     elif menu == 'ds' and curr_user == 'admin': 
         '''If the user is an admin they can display statistics about number of users
@@ -257,3 +356,4 @@ e - Exit
 
     else:
         print("You have made a wrong choice, Please Try again")
+   # print('-'*80)
