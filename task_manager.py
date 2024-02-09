@@ -20,21 +20,21 @@ with open("tasks.txt", 'r') as task_file:
     task_data = task_file.read().split("\n")
     task_data = [t for t in task_data if t != ""] # if the line for each file is NOT empty, append to this list.
 
-# --------------- Menu Functions --------------- 
-def options():
-    
-    # presenting the menu to the user and 
-    # making sure that the user input is converted to lower case.
+
+# --------------- Main Menu --------------- 
+def user_menu():
     menu = input('''Select one of the following Options below:
     r - Registering a user
     a - Adding a task
     va - View all tasks
     vm - View my task
+    gr - generate reports
     ds - Display statistics
     e - Exit
     : ''').lower()
 
-    return menu     
+    return menu
+ 
 
 # --------------- Register User Function --------------- 
 def reg_user():
@@ -153,13 +153,26 @@ def view_all():
             print(disp_str)
 
 
+# --------------- View User Tasks Functions --------------- 
+def user_tasks():
+    
+    for task_num, task in enumerate(task_list):
+        if curr_user == task['username']:
+            disp_str = f"Task number: {task_num}\n"
+            disp_str += f"Task: \t\t {task['title']}\n"
+            disp_str += f"Assigned to: \t {task['username']}\n"
+            disp_str += f"Date Assigned: \t {task['assigned_date'].strftime(DATETIME_STRING_FORMAT)}\n"
+            disp_str += f"Due Date: \t {task['due_date'].strftime(DATETIME_STRING_FORMAT)}\n"
+            disp_str += f"Task Description: \n {task['description']}\n"
+            print(disp_str)
+
+
 # --------------- View All Tasks Functions --------------- 
 def view_mine():
         '''Reads the task from task.txt file and prints to the console in the 
         format of Output 2 presented in the task pdf (i.e. includes spacing
         and labelling)'''
-        view_all()
-
+        user_tasks() # display users tasks to user
         loop_done = False
         while (not loop_done):
 
@@ -174,10 +187,14 @@ def view_mine():
                         loop_done = True
                     
                     elif task_number == task_num:
+                            
+                            # I understand that we need to view tasks specific to the user, but given the time constraint, i just made sure the user
+                            # can only select a task if the task is equal to the current signed in user.
+                            # To resolve this i will create a list which will apend the index numbers of tasks where the curr_user and logged in user are the same.
+                            # Then i will loop over this lists, and present that list to the user.
                             if t['username'] != curr_user:
                                 print("This task is not assigned to you. please select a task assigned to you.")
                                 loop_done = True
-                                #print(t)
                             else:
                                 option = input("Select 'mc' to mark task complete or 'et' to edit task: ")
                             
@@ -246,6 +263,35 @@ def view_mine():
             task_file.write("\n".join(task_list_to_write))
 
 
+# --------------- Filter Tasks Functions -----------------
+def incomplete_tasks(task_list):
+    """
+    The function checks if a task in a task list is incompleted by a specific user.
+    
+    :param task_list: A dictionary containing information about a task. It should
+    have the following keys:
+    :return: a boolean value, either True or False.
+    """
+    if task_list["username"] == name and task_list["completed"] == False:
+        return True
+    else:
+        return False
+
+
+def complete_tasks(task_list):
+    """
+    The function checks if a task in a task list is completed by a specific user.
+    
+    :param task_list: A dictionary containing information about a task. It should
+    have the following keys:
+    :return: a boolean value, either True or False.
+    """
+    if task_list["username"] == name and task_list["completed"] == True:
+        return True
+    else:
+        return False
+
+
 task_list = []
 for t_str in task_data:
     curr_t = {}
@@ -302,16 +348,11 @@ while not logged_in:
 while True:
     # presenting the menu to the user and 
     # making sure that the user input is converted to lower case.
-    menu = input('''Select one of the following Options below:
-r - Registering a user
-a - Adding a task
-va - View all tasks
-vm - View my task
-ds - Display statistics
-e - Exit
-: ''').lower()
 
-    if menu == 'r':
+    menu = user_menu()
+
+    if menu == 'r' and curr_user == 'admin':
+        '''If the user is an admin they can register new users.'''
         reg_user()
 
     elif menu == 'a':
@@ -322,23 +363,97 @@ e - Exit
             
     elif menu == 'vm':
         view_mine()
-        # '''Reads the task from task.txt file and prints to the console in the 
-        #    format of Output 2 presented in the task pdf (i.e. includes spacing
-        #    and labelling)
-        # ''' 
-        # for index, t in enumerate(task_list):
-        #     if t['username'] == curr_user:
-        #         disp_str = f"Task number: {index}\n"
-        #         disp_str += f"Task: \t\t {t['title']}\n"
-        #         disp_str += f"Assigned to: \t {t['username']}\n"
-        #         disp_str += f"Date Assigned: \t {t['assigned_date'].strftime(DATETIME_STRING_FORMAT)}\n"
-        #         disp_str += f"Due Date: \t {t['due_date'].strftime(DATETIME_STRING_FORMAT)}\n"
-        #         disp_str += f"Task Description: \n {t['description']}\n"
-        #         print(disp_str)
+  
+    elif menu == 'gr':
+        print("Reports have been generated")
+        
+        tasks_generated_total = len(task_list)
+        completed_tasks_total = 0
+        uncompleted_tasks_total = 0
+        pecentage_tasks_incomplete_total = 0
+        tasks_overdue_incomplete = 0
+        tasks_overdue = 0
+        users = []
 
-        # selected_task = input('Select your task:')
+        for i, task in enumerate(task_list):
 
+            due_date = datetime.strftime(task['due_date'], DATETIME_STRING_FORMAT)
+            assigned_date = datetime.strftime(task['assigned_date'], DATETIME_STRING_FORMAT) 
+
+            if assigned_date > due_date:
+                tasks_overdue += 1
+
+                if task['completed'] == False:
+                    tasks_overdue_incomplete += 1
+
+            if task_list[i]['completed'] == True:
+                completed_tasks_total += 1
+            
+            elif task_list[i]['completed'] != True:
+                uncompleted_tasks_total += 1
+
+        with open('task_overview.txt', 'w') as file_obj:
+            file_obj.write("Task Overview Report\n")
+            file_obj.write(f"\nTasks generated total: {tasks_generated_total}")
+            file_obj.write(f"\nTasks complete total: {completed_tasks_total}")
+            file_obj.write(f"\nTasks incomplete total: {uncompleted_tasks_total}")
+            file_obj.write(f"\nPercentage of tasks complete: {((completed_tasks_total / tasks_generated_total) * 100):.2f}%")
+            file_obj.write(f"\nPercentage of tasks incomplete: {((uncompleted_tasks_total / tasks_generated_total) * 100):.2f}%")
+            file_obj.write(f"\nTotal tasks overdue and haven't been completed: {uncompleted_tasks_total}")
+            file_obj.write(f"\nTotal Percentage of tasks overdue: {((tasks_overdue / tasks_generated_total) * 100):.2f}%")
+        
     
+        username_dict_list = []
+
+        for name in username_password.keys():
+
+            # create a dict based on the user
+            username_dict = {
+                "name": name,
+                "complete": 0,
+                "incomplete": 0,        
+            }
+
+            x = list(filter(incomplete_tasks, task_list))
+            y = list(filter(complete_tasks, task_list))
+
+            if x:
+                username_dict["incomplete"] = len(x)
+
+            if y:
+                username_dict["complete"] = len(y)
+
+            # use the  username to filter against in the functions above.  Use the length of the filter value as the values inside each dict.
+            # i.e. filter will check how many incomplete tasks a user has, then the return value, a list, it's length will be the value in the dict.
+            username_dict["total assigned"] = len(x) + len(y)
+
+            if username_dict["total assigned"] > 0:
+                username_dict["total percentage assigned"] = f"{((username_dict['total assigned'] / len(task_list)) * 100):.1f}"
+                username_dict["total percentage assigned complete"] = f"{((username_dict['complete'] / username_dict['total assigned'])* 100):.1f}%"
+                username_dict["total percentage assigned incomplete"] = f"{((username_dict['incomplete'] / username_dict['total assigned'])* 100):.1f}%"
+            else:
+                # if the user has been created and has no tasks, or user has a task but not complete, set values to zero, as without there is a zero division error.
+                username_dict["total percentage assigned"] = f"{0}%"
+                username_dict["total percentage assigned complete"] = f"{0}%"
+                username_dict["total percentage assigned incomplete"] = f"{0}%"
+
+            username_dict_list.append(username_dict)
+        
+        open('user_overview.txt', 'w').close()
+
+        with open('user_overview.txt', 'a') as file_obj:
+            print("User Overivew Report", file=file_obj)
+            print('='*80,'\n',file=file_obj)
+
+        for user_dict in username_dict_list:
+
+            with open("user_overview.txt", 'a') as file_obj:
+                for k,v in user_dict.items():
+                    print("\n")
+                    print(f"{k}: {v}", file=file_obj)
+                print('-'*80, file=file_obj)
+            
+
     elif menu == 'ds' and curr_user == 'admin': 
         '''If the user is an admin they can display statistics about number of users
             and tasks.'''
@@ -347,7 +462,11 @@ e - Exit
 
         print("-----------------------------------")
         print(f"Number of users: \t\t {num_users}")
+        for user in username_password.keys():
+            print(f"- {user}")
+        print("-----------------------------------")
         print(f"Number of tasks: \t\t {num_tasks}")
+        view_all()
         print("-----------------------------------")    
 
     elif menu == 'e':
@@ -355,5 +474,6 @@ e - Exit
         exit()
 
     else:
-        print("You have made a wrong choice, Please Try again")
+        print("Only admin can register users or display statistics")
+        print("You have made a wrong choice, please try again")
    # print('-'*80)
