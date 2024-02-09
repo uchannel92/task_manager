@@ -172,7 +172,11 @@ def view_mine():
         '''Reads the task from task.txt file and prints to the console in the 
         format of Output 2 presented in the task pdf (i.e. includes spacing
         and labelling)'''
-        user_tasks() # display users tasks to user
+    
+       user_tasks() # display users tasks to user
+        # i need to work on a way in which, if the user has no tasks, they will be redicted to the menu.
+        # currently though, if the user enters a task that is not theirs, they will be told it's not their task.
+
         loop_done = False
         while (not loop_done):
 
