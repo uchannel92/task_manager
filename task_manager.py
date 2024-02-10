@@ -155,7 +155,9 @@ def view_all():
 
 # --------------- View User Tasks Functions --------------- 
 def user_tasks():
-    
+    """
+    The function will list the tasks that has been created by the user.
+    """
     for task_num, task in enumerate(task_list):
         if curr_user == task['username']:
             disp_str = f"Task number: {task_num}\n"
@@ -165,15 +167,13 @@ def user_tasks():
             disp_str += f"Due Date: \t {task['due_date'].strftime(DATETIME_STRING_FORMAT)}\n"
             disp_str += f"Task Description: \n {task['description']}\n"
             print(disp_str)
-
-
+            
 # --------------- View All Tasks Functions --------------- 
 def view_mine():
         '''Reads the task from task.txt file and prints to the console in the 
         format of Output 2 presented in the task pdf (i.e. includes spacing
-        and labelling)'''
-    
-       user_tasks() # display users tasks to user
+        and labelling)''' 
+
         # i need to work on a way in which, if the user has no tasks, they will be redicted to the menu.
         # currently though, if the user enters a task that is not theirs, they will be told it's not their task.
 
@@ -192,10 +192,6 @@ def view_mine():
                     
                     elif task_number == task_num:
                             
-                            # I understand that we need to view tasks specific to the user, but given the time constraint, i just made sure the user
-                            # can only select a task if the task is equal to the current signed in user.
-                            # To resolve this i will create a list which will apend the index numbers of tasks where the curr_user and logged in user are the same.
-                            # Then i will loop over this lists, and present that list to the user.
                             if t['username'] != curr_user:
                                 print("This task is not assigned to you. please select a task assigned to you.")
                                 loop_done = True
@@ -366,11 +362,11 @@ while True:
         view_all()
             
     elif menu == 'vm':
+        user_tasks() # display users tasks to user
         view_mine()
   
     elif menu == 'gr':
-        print("Reports have been generated")
-        
+
         tasks_generated_total = len(task_list)
         completed_tasks_total = 0
         uncompleted_tasks_total = 0
@@ -418,25 +414,28 @@ while True:
                 "incomplete": 0,        
             }
 
-            x = list(filter(incomplete_tasks, task_list))
-            y = list(filter(complete_tasks, task_list))
+            tasks_incomplete = list(filter(incomplete_tasks, task_list))
+            tasks_complete = list(filter(complete_tasks, task_list))
 
-            if x:
-                username_dict["incomplete"] = len(x)
+            if tasks_incomplete:
+                username_dict["incomplete"] = len(tasks_incomplete)
 
-            if y:
-                username_dict["complete"] = len(y)
+            if tasks_complete:
+                username_dict["complete"] = len(tasks_complete)
 
-            # use the  username to filter against in the functions above.  Use the length of the filter value as the values inside each dict.
-            # i.e. filter will check how many incomplete tasks a user has, then the return value, a list, it's length will be the value in the dict.
-            username_dict["total assigned"] = len(x) + len(y)
+            # use the  username to filter against in the functions above.  
+            # Use the length of the filter value as the values inside each dict.
+            # i.e. filter will check how many incomplete tasks a user has, 
+            # then the return value, a list, it's length will be the value in the dict.
+            username_dict["total assigned"] = len(tasks_incomplete) + len(tasks_complete)
 
             if username_dict["total assigned"] > 0:
-                username_dict["total percentage assigned"] = f"{((username_dict['total assigned'] / len(task_list)) * 100):.1f}"
+                username_dict["total percentage assigned"] = f"{((username_dict['total assigned'] / len(task_list)) * 100):.1f}%"
                 username_dict["total percentage assigned complete"] = f"{((username_dict['complete'] / username_dict['total assigned'])* 100):.1f}%"
                 username_dict["total percentage assigned incomplete"] = f"{((username_dict['incomplete'] / username_dict['total assigned'])* 100):.1f}%"
             else:
-                # if the user has been created and has no tasks, or user has a task but not complete, set values to zero, as without there is a zero division error.
+                # if the user has been created and has no tasks, or user has a 
+                # task but not complete, set values to zero, as without there is a zero division error.
                 username_dict["total percentage assigned"] = f"{0}%"
                 username_dict["total percentage assigned complete"] = f"{0}%"
                 username_dict["total percentage assigned incomplete"] = f"{0}%"
@@ -450,12 +449,12 @@ while True:
             print('='*80,'\n',file=file_obj)
 
         for user_dict in username_dict_list:
-
             with open("user_overview.txt", 'a') as file_obj:
                 for k,v in user_dict.items():
-                    print("\n")
                     print(f"{k}: {v}", file=file_obj)
                 print('-'*80, file=file_obj)
+                
+        print("Reports have been generated")
             
 
     elif menu == 'ds' and curr_user == 'admin': 
